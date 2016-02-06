@@ -23,8 +23,17 @@ class ProductSearchProvider implements ProductSearchProviderInterface
 
         $prefix      = $this->db->getPrefix();
         $id_category = (int)$query->getIdCategory();
+        $id_shop     = (int)$context->getIdShop();
 
-        $sql = "SELECT count(*) FROM {$prefix}category_product WHERE id_category = $id_category";
+        $sql = "SELECT
+            count(DISTINCT p.id_product)
+            FROM {$prefix}product_shop p
+            INNER JOIN {$prefix}category_product cp
+                ON cp.id_product = p.id_product
+            WHERE cp.id_category = $id_category
+            AND p.id_shop = $id_shop
+        ";
+
         $count = $this->db->getValue($sql);
 
         $result->setTotalProductsCount($count);
