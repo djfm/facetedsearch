@@ -33,6 +33,6 @@ class FacetedSearch extends Module
 
     public function hookProductSearchProvider($params)
     {
-        return new ProductSearchProvider;
+        return new ProductSearchProvider(Db::getInstance());
     }
 }
