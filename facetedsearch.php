@@ -1,5 +1,9 @@
 <?php
 
+require implode(DIRECTORY_SEPARATOR, ['vendor', 'autoload.php']);
+
+use PrestaShop\FacetedSearch\ProductSearchProvider;
+
 class FacetedSearch extends Module
 {
     public function __construct()
@@ -20,5 +24,15 @@ class FacetedSearch extends Module
         $this->description = $this->l('Get a rich, faceted search engine on all your product listing pages.');
 
         parent::__construct();
+    }
+
+    public function install()
+    {
+        return parent::install() && $this->registerHook('productSearchProvider');
+    }
+
+    public function hookProductSearchProvider($params)
+    {
+        return new ProductSearchProvider;
     }
 }
