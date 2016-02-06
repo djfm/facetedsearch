@@ -1,0 +1,13 @@
+language: php
+
+services: mysql
+
+sudo: false
+
+addons:
+  apt_packages:
+      - apache2
+      - libapache2-mod-php5
+
+script:
+  - true
