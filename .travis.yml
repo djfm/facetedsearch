@@ -1,5 +1,8 @@
 language: php
 
+php:
+  - 5.5
+
 services: mysql
 
 
@@ -13,6 +16,10 @@ before_script:
 
   # Install PrestaShop
   - bash travis-scripts/install-prestashop
+  # Put module in place
+  - mv facetedsearch PrestaShop/modules/
 
 script:
-  - true
+  - cd PrestaShop/modules/facetedsearch
+  - composer install --no-dev
+  - phpunit
