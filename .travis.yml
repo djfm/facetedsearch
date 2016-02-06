@@ -2,12 +2,17 @@ language: php
 
 services: mysql
 
-sudo: false
 
-addons:
-  apt_packages:
-      - apache2
-      - libapache2-mod-php5
+before_script:
+  # Move all of our files to a subdirectory
+  - my_files=`ls -A`
+  - mkdir facetedsearch
+  - for my_file in $my_files; do mv $my_file facetedsearch/; done
+  # we need this at the root though
+  - mv facetedsearch/travis-scripts .
+
+  # Install PrestaShop
+  - bash travis-scripts/install-prestashop
 
 script:
   - true

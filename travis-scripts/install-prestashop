@@ -1,0 +1,5 @@
+mysql -e 'create database prestashop;'
+git clone https://github.com/PrestaShop/PrestaShop.git -b develop PrestaShop
+cd PrestaShop
+composer install --no-interaction --no-progress --no-interaction --no-progress
+php install-dev/index_cli.php --language=en --country=fr --domain=localhost --db_name=prestashop --name=prestashop --email=pub@prestashop.com --password=123456789
