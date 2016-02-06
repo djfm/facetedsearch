@@ -6,6 +6,7 @@ use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchProviderInterface;
 use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchQuery;
 use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchContext;
 use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchResult;
+use PrestaShop\PrestaShop\Core\Product\Search\Filter;
 use Db;
 
 class ProductSearchProvider implements ProductSearchProviderInterface
@@ -17,22 +18,58 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         $this->db = $db;
     }
 
+    private function getSQLGenerator(ProductSearchContext $context)
+    {
+        return new SQLGenerator($this->db->getPrefix(), $context, function ($string) {
+            return $this->db->escape($string);
+        });
+    }
+
+    private function generateCountSQL(ProductSearchContext $context, ProductSearchQuery $query)
+    {
+        $prefix = $this->db->getPrefix();
+        $id_shop = (int)$context->getIdShop();
+
+        $qb = new QueryBuilder;
+
+        $qb
+            ->select("count(DISTINCT p.id_product)")
+            ->from("{$prefix}product_shop p")
+            ->where("p.id_shop = $id_shop")
+        ;
+
+        if ($query->getQueryType() === 'category') {
+            $id_category = (int)$query->getIdCategory();
+            $qb
+                ->innerJoin("{$prefix}category_product cp ON cp.id_product = p.id_product")
+                ->where("cp.id_category = $id_category")
+            ;
+        }
+
+        $sqlGenerator = $this->getSQLGenerator($context);
+
+        $facets = (new FacetsURLSerializer)->unserialize($query->getEncodedFacets());
+        foreach ($facets as $facetIndex => $facet) {
+            if ($facet->getType() === "attribute") {
+                $qb->from($sqlGenerator->getJoinsForAttributeFacet($facetIndex));
+                $qb->where(implode(" OR ", array_map(
+                    function (Filter $filter) use ($sqlGenerator, $facetIndex, $facet) {
+                        $condition = $sqlGenerator->getFilterConditionForAttributeFacet($facetIndex, $facet, $filter);
+                        return "($condition)";
+                    },
+                    $facet->getFilters()))
+                );
+            }
+        }
+
+        return $qb->getSQL();
+    }
+
     public function runQuery(ProductSearchContext $context, ProductSearchQuery $query)
     {
         $result = new ProductSearchResult;
 
-        $prefix      = $this->db->getPrefix();
-        $id_category = (int)$query->getIdCategory();
-        $id_shop     = (int)$context->getIdShop();
-
-        $sql = "SELECT
-            count(DISTINCT p.id_product)
-            FROM {$prefix}product_shop p
-            INNER JOIN {$prefix}category_product cp
-                ON cp.id_product = p.id_product
-            WHERE cp.id_category = $id_category
-            AND p.id_shop = $id_shop
-        ";
+        $sql = $this->generateCountSQL($context, $query);
 
         $count = $this->db->getValue($sql);
 
