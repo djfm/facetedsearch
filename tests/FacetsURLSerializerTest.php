@@ -13,7 +13,7 @@ class FacetsURLSerializerTest extends PHPUnit_Framework_TestCase
 
     public function test_unserialize_attribute_facet_with_one_filter()
     {
-        $facets = $this->serializer->unserialize("@-Color-Blue");
+        $facets = $this->serializer->unserialize("attribute-Color-Blue");
         $this->assertCount(1, $facets);
 
         $facet = $facets[0];
