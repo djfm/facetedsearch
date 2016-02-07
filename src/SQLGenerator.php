@@ -48,4 +48,25 @@ class SQLGenerator
 
         return "agl{$facetIndex}.name = $label AND al{$facetIndex}.name = $value";
     }
+
+    public function getJoinsForFeatureFacet($facetIndex)
+    {
+        return "INNER JOIN {$this->prefix}feature_product fp{$facetIndex}
+                    ON fp{$facetIndex}.id_product = p.id_product
+                INNER JOIN {$this->prefix}feature_lang fl{$facetIndex}
+                    ON fl{$facetIndex}.id_feature = fp{$facetIndex}.id_feature
+                    AND fl{$facetIndex}.id_lang = {$this->id_lang}
+                INNER JOIN {$this->prefix}feature_value_lang fvl{$facetIndex}
+                    ON fvl{$facetIndex}.id_feature_value = fp{$facetIndex}.id_feature_value
+                    AND fvl{$facetIndex}.id_lang = {$this->id_lang}
+        ";
+    }
+
+    public function getFilterConditionForFeatureFacet($facetIndex, Facet $facet, Filter $filter)
+    {
+        $label = $this->safeString($facet->getLabel());
+        $value = $this->safeString($filter->getValue());
+
+        return "fl{$facetIndex}.name = $label AND fvl{$facetIndex}.value = $value";
+    }
 }

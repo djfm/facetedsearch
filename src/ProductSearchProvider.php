@@ -50,11 +50,25 @@ class ProductSearchProvider implements ProductSearchProviderInterface
 
         $facets = (new FacetsURLSerializer)->unserialize($query->getEncodedFacets());
         foreach ($facets as $facetIndex => $facet) {
-            if ($facet->getType() === "attribute") {
-                $qb->from($sqlGenerator->getJoinsForAttributeFacet($facetIndex));
+
+            $facetType = $facet->getType();
+
+            if (in_array($facetType, ["attribute", "feature"])) {
+                $qb->from($sqlGenerator->{"getJoinsFor{$facetType}Facet"}($facetIndex));
                 $qb->where(implode(" OR ", array_map(
-                    function (Filter $filter) use ($sqlGenerator, $facetIndex, $facet) {
-                        $condition = $sqlGenerator->getFilterConditionForAttributeFacet($facetIndex, $facet, $filter);
+                    function (Filter $filter) use (
+                        $sqlGenerator,
+                        $facetIndex,
+                        $facet,
+                        $facetType
+                    ) {
+                        $condition = $sqlGenerator
+                            ->{"getFilterConditionFor{$facetType}Facet"}(
+                                $facetIndex,
+                                $facet,
+                                $filter
+                            )
+                        ;
                         return "($condition)";
                     },
                     $facet->getFilters()))
