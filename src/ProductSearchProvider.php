@@ -6,6 +6,8 @@ use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchProviderInterface;
 use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchQuery;
 use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchContext;
 use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchResult;
+use PrestaShop\PrestaShop\Core\Product\Search\Facet;
+use PrestaShop\PrestaShop\Core\Product\Search\FacetCollection;
 use PrestaShop\PrestaShop\Core\Product\Search\Filter;
 use Db;
 
@@ -25,7 +27,46 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         });
     }
 
-    private function generateCountSQL(ProductSearchContext $context, ProductSearchQuery $query)
+    private function addRootCondition(
+        ProductSearchContext $context,
+        ProductSearchQuery $query,
+        QueryBuilder $qb
+    ) {
+        $prefix = $this->db->getPrefix();
+
+        if ($query->getQueryType() === 'category') {
+            $id_category = (int)$query->getIdCategory();
+            $qb
+                ->innerJoin("{$prefix}category_product cp ON cp.id_product = p.id_product")
+                ->where("cp.id_category = $id_category")
+            ;
+        }
+    }
+
+    private function generateFacetCondition(ProductSearchContext $context, $facetIndex, $facet)
+    {
+        $sqlGenerator = $this->getSQLGenerator($context);
+        return implode(" OR ", array_map(
+            function (Filter $filter) use (
+                $sqlGenerator,
+                $facetIndex,
+                $facet
+            ) {
+                $facetType = $facet->getType();
+                $condition = $sqlGenerator
+                    ->{"getFilterConditionFor{$facetType}Facet"}(
+                        $facetIndex,
+                        $facet,
+                        $filter
+                    )
+                ;
+                return "($condition)";
+            },
+            $facet->getFilters())
+        );
+    }
+
+    private function getBaseQueryBuilder(ProductSearchContext $context, ProductSearchQuery $query)
     {
         $prefix = $this->db->getPrefix();
         $id_shop = (int)$context->getIdShop();
@@ -38,45 +79,70 @@ class ProductSearchProvider implements ProductSearchProviderInterface
             ->where("p.id_shop = $id_shop")
         ;
 
-        if ($query->getQueryType() === 'category') {
-            $id_category = (int)$query->getIdCategory();
-            $qb
-                ->innerJoin("{$prefix}category_product cp ON cp.id_product = p.id_product")
-                ->where("cp.id_category = $id_category")
-            ;
-        }
+        $this->addRootCondition($context, $query, $qb);
+
+        return $qb;
+    }
+
+    private function generateCountSQL(ProductSearchContext $context, ProductSearchQuery $query)
+    {
+        $qb = $this->getBaseQueryBuilder($context, $query);
 
         $sqlGenerator = $this->getSQLGenerator($context);
 
         $facets = (new FacetsURLSerializer)->unserialize($query->getEncodedFacets());
         foreach ($facets as $facetIndex => $facet) {
-
             $facetType = $facet->getType();
-
             if (in_array($facetType, ["attribute", "feature"])) {
                 $qb->from($sqlGenerator->{"getJoinsFor{$facetType}Facet"}($facetIndex));
-                $qb->where(implode(" OR ", array_map(
-                    function (Filter $filter) use (
-                        $sqlGenerator,
-                        $facetIndex,
-                        $facet,
-                        $facetType
-                    ) {
-                        $condition = $sqlGenerator
-                            ->{"getFilterConditionFor{$facetType}Facet"}(
-                                $facetIndex,
-                                $facet,
-                                $filter
-                            )
-                        ;
-                        return "($condition)";
-                    },
-                    $facet->getFilters()))
-                );
+                $qb->where($this->generateFacetCondition($context, $facetIndex, $facet));
             }
         }
 
         return $qb->getSQL();
+    }
+
+    private function getAvailableFacets(ProductSearchContext $context, ProductSearchQuery $query)
+    {
+        $baseQb = $this->getBaseQueryBuilder($context, $query);
+        $sqlGenerator = $this->getSQLGenerator($context);
+
+        $qb = $sqlGenerator->buildQueryForAvailableAttributeFacets("_availableFacets", clone $baseQb);
+        $attributeFacets = [];
+        foreach ($this->db->executeS($qb->getSQL()) as $row) {
+            $attributeFacets[] = (new Facet)
+                ->setType('attribute')
+                ->setLabel($row['label'])
+            ;
+        }
+
+        return $attributeFacets;
+    }
+
+    private function addFacetsToResult(
+        ProductSearchContext $context,
+        ProductSearchQuery $query,
+        ProductSearchResult $result
+    ) {
+        $availableFacets = $this->getAvailableFacets($context, $query);
+        $queryFacets = (new FacetsURLSerializer)->unserialize($query->getEncodedFacets());
+        $facets = (new FacetsMerger)->merge($availableFacets, $queryFacets);
+
+        $qb = $this->getBaseQueryBuilder($context, $query);
+
+        foreach ($facets as $facet) {
+            foreach ($facets as $constrainingFacet) {
+                if ($constrainingFacet === $facet) {
+                    // select filters, no conditions
+                } else {
+                    // add constraints
+                }
+            }
+        }
+
+        $facetCollection = (new FacetCollection)->setFacets($facets);
+        $result->setFacetCollection($facetCollection);
+        return $this;
     }
 
     public function runQuery(ProductSearchContext $context, ProductSearchQuery $query)
@@ -84,10 +150,10 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         $result = new ProductSearchResult;
 
         $sql = $this->generateCountSQL($context, $query);
-
         $count = $this->db->getValue($sql);
-
         $result->setTotalProductsCount($count);
+
+        $this->addFacetsToResult($context, $query, $result);
 
         return $result;
     }
