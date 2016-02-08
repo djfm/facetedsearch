@@ -18,6 +18,14 @@ class FacetsMergerTest extends PHPUnit_Framework_TestCase
         $this->assertCount(1, $this->merger->merge([], [(new Facet)->setLabel('FacetA')]));
     }
 
+    public function test_old_facets_are_kept()
+    {
+        $this->assertCount(2, $this->merger->merge(
+            [(new Facet)->setLabel('FacetA')],
+            [(new Facet)->setLabel('FacetB')])
+        );
+    }
+
     public function test_filters_are_copied_to_existing_facets__new_filter()
     {
         $initial = [(new Facet)->setLabel('FacetA')];

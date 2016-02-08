@@ -8,8 +8,9 @@ class FacetsMerger
     {
         $mergedFacets = [];
         foreach ($newFacets as $newFacet) {
-            foreach ($facets as $facet) {
+            foreach ($facets as $key => $facet) {
                 if ($facet->getLabel() === $newFacet->getLabel()) {
+                    unset($facets[$key]);
                     $merged = clone $facet;
                     $mergedFacets[] = $merged;
                     foreach ($newFacet->getFilters() as $newFilter) {
@@ -27,6 +28,11 @@ class FacetsMerger
             }
             $mergedFacets[] = clone $newFacet;
         }
+
+        foreach ($facets as $originalFacet) {
+            array_unshift($mergedFacets, clone $originalFacet);
+        }
+
         return $mergedFacets;
     }
 }
