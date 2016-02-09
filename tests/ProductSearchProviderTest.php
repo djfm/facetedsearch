@@ -128,20 +128,20 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
                                 );
                                 continue 2;
                             }
+                            throw new Exception(sprintf(
+                                'Expected a facet labeled `%1$s` with filter `%2$s`, but the filter was not found.',
+                                $facetLabel,
+                                $filterLabel
+                            ));
                         }
-                        throw new Exception(sprintf(
-                            'Expected a facet labeled `%1$s` with filter `%2$s`, but the filter was found.',
-                            $facetLabel,
-                            $filterLabel
-                        ));
                     }
-                    continue 2;
+                    continue;
                 }
+                throw new Exception(sprintf(
+                    'Expected a facet with label `%1$s` in the facetCollection inside the search result, but none was found.',
+                    $facetLabel
+                ));
             }
-            throw new Exception(sprintf(
-                'Expected a facet with label `%1$s` in the facetCollection inside the search result, but none was found.',
-                $facetLabel
-            ));
         }
     }
 }
