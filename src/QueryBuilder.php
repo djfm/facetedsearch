@@ -10,8 +10,11 @@ class QueryBuilder
     private $orderBy = [];
     private $groupBy = [];
 
-    public function select($fragment)
+    public function select($fragment, $replace = false)
     {
+        if ($replace) {
+            $this->select = [];
+        }
         $this->select[] = $fragment;
         return $this;
     }
@@ -24,7 +27,9 @@ class QueryBuilder
 
     public function where($fragment)
     {
-        $this->where[] = $fragment;
+        if ("" !== $fragment) {
+            $this->where[] = $fragment;
+        }
         return $this;
     }
 

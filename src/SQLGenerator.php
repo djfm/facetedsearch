@@ -70,6 +70,34 @@ class SQLGenerator
         ;
     }
 
+    public function buildQueryForAttributeFacetFiltersAndMagnitudes(
+        $facetIndex,
+        Facet $facet,
+        QueryBuilder $qb
+    ) {
+        return $qb
+            ->select("al{$facetIndex}.name as label, COUNT(DISTINCT p.id_product) as magnitude", true)
+            ->from("INNER JOIN {$this->prefix}product_attribute_shop pa{$facetIndex}
+                        ON pa{$facetIndex}.id_product = p.id_product AND pa{$facetIndex}.id_shop = p.id_shop
+                    INNER JOIN {$this->prefix}product_attribute_combination ac{$facetIndex}
+                        ON ac{$facetIndex}.id_product_attribute = pa{$facetIndex}.id_product_attribute
+                    INNER JOIN {$this->prefix}attribute a{$facetIndex}
+                        ON a{$facetIndex}.id_attribute = ac{$facetIndex}.id_attribute
+                    INNER JOIN {$this->prefix}attribute_group ag{$facetIndex}
+                        ON  ag{$facetIndex}.id_attribute_group = a{$facetIndex}.id_attribute_group
+                    INNER JOIN {$this->prefix}attribute_group_lang agl{$facetIndex}
+                        ON agl{$facetIndex}.id_attribute_group = ag{$facetIndex}.id_attribute_group
+                        AND agl{$facetIndex}.id_lang = {$this->id_lang}
+                    INNER JOIN {$this->prefix}attribute_lang al{$facetIndex}
+                        ON al{$facetIndex}.id_attribute = a{$facetIndex}.id_attribute
+                        AND al{$facetIndex}.id_lang = {$this->id_lang}
+            ")
+            ->where("agl{$facetIndex}.name = " . $this->safeString($facet->getLabel()))
+            ->groupBy("al{$facetIndex}.id_attribute")
+            ->orderBy("magnitude DESC")
+        ;
+    }
+
     public function getJoinsForFeatureFacet($facetIndex)
     {
         return "INNER JOIN {$this->prefix}feature_product fp{$facetIndex}

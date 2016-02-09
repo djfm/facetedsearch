@@ -128,14 +128,46 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         $queryFacets = (new FacetsURLSerializer)->unserialize($query->getEncodedFacets());
         $facets = (new FacetsMerger)->merge($availableFacets, $queryFacets);
 
-        $qb = $this->getBaseQueryBuilder($context, $query);
+        $sqlGenerator = $this->getSQLGenerator($context);
 
         foreach ($facets as $facet) {
-            foreach ($facets as $constrainingFacet) {
+            $facetType = $facet->getType();
+            $qb = $this->getBaseQueryBuilder($context, $query);
+            $fetchMagnitudes = false;
+            foreach ($facets as $facetIndex => $constrainingFacet) {
                 if ($constrainingFacet === $facet) {
                     // select filters, no conditions
+                    if ($facetType === "attribute") {
+                        $sqlGenerator->buildQueryForAttributeFacetFiltersAndMagnitudes(
+                            $facetIndex,
+                            $facet,
+                            $qb
+                        );
+                        $fetchMagnitudes = true;
+                    }
                 } else {
                     // add constraints
+                    if (in_array($facetType, ["attribute", "feature"])) {
+                        $qb->from($sqlGenerator->{"getJoinsFor{$facetType}Facet"}($facetIndex));
+                        $qb->where($this->generateFacetCondition($context, $facetIndex, $facet));
+                    }
+                }
+            }
+
+            if ($fetchMagnitudes) {
+                $filters = $this->db->executeS($qb->getSQL());
+                foreach ($filters as $filterRow) {
+                    $filter = (new Filter)
+                        ->setLabel($filterRow['label'])
+                        ->setMagnitude((int)$filterRow['magnitude'])
+                    ;
+                    foreach ($facet->getFilters() as $currentFilter) {
+                        if ($filter->getLabel() === $currentFilter->getLabel()) {
+                            $currentFilter->setMagnitude($filter->getMagnitude());
+                            continue 2;
+                        }
+                    }
+                    $facet->addFilter($filter);
                 }
             }
         }

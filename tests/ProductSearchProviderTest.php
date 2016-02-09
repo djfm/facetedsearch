@@ -112,36 +112,41 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
         );
 
         foreach ($expectedMagnitudes as $facetLabel => $filtersLabelsAndMagnitudes) {
-            foreach ($result->getFacetCollection()->getFacets() as $facet) {
-                if ($facet->getLabel() === $facetLabel) {
-                    foreach ($filtersLabelsAndMagnitudes as $filterLabel => $magnitude) {
-                        foreach ($facet->getFilters() as $filter) {
-                            if ($filter->getLabel() === $filterLabel) {
-                                $this->assertEquals(
-                                    $magnitude,
-                                    $filter->getMagnitude(),
-                                    sprintf(
-                                        'Wrong magnitude for filter `%1$s` in facet `%2$s`.',
-                                        $filterLabel,
-                                        $facetLabel
-                                    )
-                                );
-                                continue 2;
-                            }
-                            throw new Exception(sprintf(
-                                'Expected a facet labeled `%1$s` with filter `%2$s`, but the filter was not found.',
-                                $facetLabel,
-                                $filterLabel
-                            ));
-                        }
-                    }
-                    continue;
-                }
-                throw new Exception(sprintf(
-                    'Expected a facet with label `%1$s` in the facetCollection inside the search result, but none was found.',
-                    $facetLabel
-                ));
+            $facet = $this->findFacetByLabel(
+                $facetLabel,
+                $result->getFacetCollection()->getFacets()
+            );
+
+            foreach ($filtersLabelsAndMagnitudes as $filterLabel => $magnitude) {
+                $this->assertEquals(
+                    $magnitude,
+                    $this
+                        ->findFilterByLabel($filterLabel, $facet)
+                        ->getMagnitude()
+                );
             }
         }
+    }
+
+    private function findFacetByLabel($label, array $facets)
+    {
+        foreach ($facets as $facet) {
+            if ($facet->getLabel() === $label) {
+                return $facet;
+            }
+        }
+
+        throw new Exeption(sprintf('No facet labeled `%1$s` was found.', $label));
+    }
+
+    private function findFilterByLabel($label, Facet $facet)
+    {
+        foreach ($facet->getFilters() as $filter) {
+            if ($filter->getLabel() === $label) {
+                return $filter;
+            }
+        }
+
+        throw new Exeption(sprintf('No filter labeled `%1$s` was found in the `%2$s` facet.', $label, $facet->getLabel()));
     }
 }
