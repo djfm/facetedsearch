@@ -32,7 +32,7 @@ class Field implements ExpressionInterface
             $this->tableName . "." . $this->fieldName :
             $this->fieldName
         ;
-        return $this->alias ? ($base . " as " . $this->alias) : $base;
+        return $this->alias ? ($base . " AS " . $this->alias) : $base;
     }
 
     public function alias($alias)

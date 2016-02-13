@@ -38,7 +38,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
     public function test_field_creates_a_fully_qualified_field_name_with_an_alias()
     {
         $this->assertEquals(
-            "product.id as productId",
+            "product.id AS productId",
             $this->qb->field("product", "id")->alias("productId")->getSQL()
         );
     }
@@ -54,7 +54,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
     public function test_table_creates_an_aliased_table()
     {
         $this->assertEquals(
-            "product as p",
+            "product AS p",
             $this->qb->table("product")->alias("p")->getSQL()
         );
     }
@@ -327,7 +327,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
     public function test_table_aliases_are_not_prefixed()
     {
         $this->assertEquals(
-            "SELECT p.x FROM prefix_product as p",
+            "SELECT p.x FROM prefix_product AS p",
             $this->qb->select(
                 $this->qb->field("p", "x")
             )

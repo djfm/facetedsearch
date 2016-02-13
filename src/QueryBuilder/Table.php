@@ -27,7 +27,7 @@ class Table
     public function getSQL()
     {
         if ($this->alias) {
-            return $this->tableName . " as " . $this->alias;
+            return $this->tableName . " AS " . $this->alias;
         } else {
             return $this->tableName;
         }
