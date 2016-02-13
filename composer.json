@@ -6,5 +6,8 @@
       "psr-4": {
         "PrestaShop\\FacetedSearch\\": "src/"
       }
+    },
+    "require": {
+        "phake/phake": "^2.2"
     }
 }

@@ -12,6 +12,18 @@ class Table
         $this->tableName = $tableName;
     }
 
+    public function setTableName($tableName)
+    {
+        $table = clone $this;
+        $table->tableName = $tableName;
+        return $table;
+    }
+
+    public function getTableName()
+    {
+        return $this->tableName;
+    }
+
     public function getSQL()
     {
         if ($this->alias) {

@@ -2,7 +2,7 @@
 
 namespace PrestaShop\FacetedSearch\QueryBuilder;
 
-class Operation implements ExpressionInterface
+class Operation extends AbstractMappable implements ExpressionInterface
 {
     private $operator;
     private $arguments = [];

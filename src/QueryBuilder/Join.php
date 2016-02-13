@@ -2,7 +2,7 @@
 
 namespace PrestaShop\FacetedSearch\QueryBuilder;
 
-class Join
+class Join extends AbstractMappable
 {
     const INNER = "INNER JOIN";
     private $type;

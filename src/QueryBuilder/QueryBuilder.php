@@ -2,15 +2,16 @@
 
 namespace PrestaShop\FacetedSearch\QueryBuilder;
 
-class QueryBuilder
+class QueryBuilder extends AbstractMappable
 {
-    private $select     = [];
-    private $from       = null;
-    private $joins      = [];
-    private $where      = null;
-    private $groupBy    = [];
-    private $orderBy    = [];
-    private $escaper    = null;
+    private $select         = [];
+    private $from           = null;
+    private $joins          = [];
+    private $where          = null;
+    private $groupBy        = [];
+    private $orderBy        = [];
+    private $escaper        = null;
+    private $tablePrefix    = '';
 
     public function __construct(ValueEscaperInterface $escaper)
     {
@@ -121,7 +122,14 @@ class QueryBuilder
         return $qb;
     }
 
-    public function getSQL()
+    public function setTablePrefix($tablePrefix)
+    {
+        $qb = clone $this;
+        $qb->tablePrefix = $tablePrefix;
+        return $qb;
+    }
+
+    private function doGetSQL()
     {
         $parts = [];
 
@@ -158,5 +166,26 @@ class QueryBuilder
         }
 
         return implode(" ", $parts);
+    }
+
+    public function getSQL()
+    {
+        if ($this->tablePrefix) {
+            return $this->map(function ($fragment) {
+                if ($fragment instanceof Table) {
+                    return $fragment->setTableName(
+                        $this->tablePrefix . $fragment->getTableName()
+                    );
+                } else if ($fragment instanceof Field && $fragment->getTableName()) {
+                    return $fragment->setTableName(
+                        $this->tablePrefix . $fragment->getTableName()
+                    );
+                } else {
+                    return $fragment;
+                }
+            })->doGetSQL();
+        } else {
+            return $this->doGetSQL();
+        }
     }
 }

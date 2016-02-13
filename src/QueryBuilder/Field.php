@@ -14,6 +14,18 @@ class Field implements ExpressionInterface
         $this->fieldName = $fieldName;
     }
 
+    public function setTableName($tableName)
+    {
+        $table = clone $this;
+        $table->tableName = $tableName;
+        return $table;
+    }
+
+    public function getTableName()
+    {
+        return $this->tableName;
+    }
+
     public function getSQL()
     {
         $base = $this->tableName ?

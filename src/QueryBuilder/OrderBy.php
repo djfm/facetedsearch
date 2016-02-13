@@ -2,7 +2,7 @@
 
 namespace PrestaShop\FacetedSearch\QueryBuilder;
 
-class OrderBy
+class OrderBy extends AbstractMappable
 {
     private $expression;
     private $direction;
