@@ -323,4 +323,19 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
                 ->getSQL()
         );
     }
+
+    public function test_table_aliases_are_not_prefixed()
+    {
+        $this->assertEquals(
+            "SELECT p.x FROM prefix_product as p",
+            $this->qb->select(
+                $this->qb->field("p", "x")
+            )
+            ->from(
+                $this->qb->table("product")->alias("p")
+            )
+            ->setTablePrefix("prefix_")
+            ->getSQL()
+        );
+    }
 }

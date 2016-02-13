@@ -171,12 +171,28 @@ class QueryBuilder extends AbstractMappable
     public function getSQL()
     {
         if ($this->tablePrefix) {
-            return $this->map(function ($fragment) {
-                if ($fragment instanceof Table) {
+            $aliases = [];
+
+            $this->map(function ($fragment) use (&$aliases) {
+                if ($fragment instanceof Table && $fragment->getAlias()) {
+                    $aliases[$fragment->getAlias()] = true;
+                }
+                return $fragment;
+            });
+
+            return $this->map(function ($fragment) use ($aliases) {
+                if (
+                    $fragment instanceof Table &&
+                    !array_key_exists($fragment->getTableName(), $aliases)
+                ) {
                     return $fragment->setTableName(
                         $this->tablePrefix . $fragment->getTableName()
                     );
-                } else if ($fragment instanceof Field && $fragment->getTableName()) {
+                } else if (
+                    $fragment instanceof Field &&
+                    $fragment->getTableName() &&
+                    !array_key_exists($fragment->getTableName(), $aliases)
+                ) {
                     return $fragment->setTableName(
                         $this->tablePrefix . $fragment->getTableName()
                     );

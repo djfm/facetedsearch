@@ -39,4 +39,9 @@ class Table
         $newTable->alias = $alias;
         return $newTable;
     }
+
+    public function getAlias()
+    {
+        return $this->alias;
+    }
 }
