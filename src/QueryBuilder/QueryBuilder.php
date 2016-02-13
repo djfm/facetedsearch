@@ -10,6 +10,12 @@ class QueryBuilder
     private $where      = null;
     private $groupBy    = [];
     private $orderBy    = [];
+    private $escaper    = null;
+
+    public function __construct(ValueEscaperInterface $escaper)
+    {
+        $this->escaper = $escaper;
+    }
 
     public function field($tableNameOrFieldName, $fieldName = null)
     {
@@ -63,6 +69,11 @@ class QueryBuilder
     public function count(ExpressionInterface $a)
     {
         return (new Operation("COUNT", "prefix"))->addArgument($a);
+    }
+
+    public function value($v)
+    {
+        return new Value($v, $this->escaper);
     }
 
     public function where(ExpressionInterface $expression)

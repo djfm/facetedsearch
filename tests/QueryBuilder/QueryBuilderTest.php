@@ -3,6 +3,7 @@
 namespace PrestaShop\FacetedSearch\QueryBuilder;
 
 use PHPUnit_Framework_TestCase;
+use Phake;
 
 class QueryBuilderTest extends PHPUnit_Framework_TestCase
 {
@@ -10,7 +11,18 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
 
     public function setup()
     {
-        $this->qb = new QueryBuilder;
+        $valueEscaper = Phake::mock(
+            'PrestaShop\FacetedSearch\QueryBuilder\ValueEscaperInterface'
+        );
+
+        Phake::when($valueEscaper)
+            ->escapeString(Phake::anyParameters())
+            ->thenReturnCallback(function ($str) {
+                return "escaped($str)";
+            })
+        ;
+
+        $this->qb = new QueryBuilder($valueEscaper);
     }
 
     public function test_field_creates_a_fully_qualified_field_name()
@@ -109,6 +121,28 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
             $this->qb->equal(
                 $this->qb->field("a"),
                 $this->qb->field("b")
+            )->getSQL()
+        );
+    }
+
+    public function test_equal_literal_number()
+    {
+        $this->assertEquals(
+            "(a = 1)",
+            $this->qb->equal(
+                $this->qb->field("a"),
+                $this->qb->value(1)
+            )->getSQL()
+        );
+    }
+
+    public function test_equal_literal_string()
+    {
+        $this->assertEquals(
+            "(a = 'escaped(unsafe)')",
+            $this->qb->equal(
+                $this->qb->field("a"),
+                $this->qb->value("unsafe")
             )->getSQL()
         );
     }
