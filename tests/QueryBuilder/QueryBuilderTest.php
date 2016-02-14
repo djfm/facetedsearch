@@ -354,4 +354,114 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
             ->getSQL()
         );
     }
+
+    public function test_queryBuilders_are_merged__where_is_merged_with_and()
+    {
+        $this->assertEquals(
+            "SELECT id FROM product WHERE ((x = 4) AND (y = 5))",
+            $this->qb->select(
+                $this->qb->field("id")
+            )->from(
+                $this->qb->table("product")
+            )->where(
+                $this->qb->equal(
+                    $this->qb->field("x"),
+                    $this->qb->value(4)
+                )
+            )->merge(
+                $this->qb->where(
+                    $this->qb->equal(
+                        $this->qb->field("y"),
+                        $this->qb->value(5)
+                    )
+                )
+            )->getSQL()
+        );
+    }
+
+    public function test_queryBuilders_are_merged__select_is_concatenated()
+    {
+        $this->assertEquals(
+            "SELECT id, stuff FROM product",
+            $this->qb->select(
+                $this->qb->field("id")
+            )->from(
+                $this->qb->table("product")
+            )->merge(
+                $this->qb->select(
+                    $this->qb->field("stuff")
+                )
+            )->getSQL()
+        );
+    }
+
+    public function test_queryBuilders_are_merged__rhs_from_is_used()
+    {
+        $this->assertEquals(
+            "SELECT id FROM not_product",
+            $this->qb->select(
+                $this->qb->field("id")
+            )->from(
+                $this->qb->table("product")
+            )->merge(
+                $this->qb->from(
+                    $this->qb->table("not_product")
+                )
+            )->getSQL()
+        );
+    }
+
+    public function test_queryBuilders_are_merged__joins_are_concatenated()
+    {
+        $this->assertEquals(
+            "SELECT id FROM product INNER JOIN x INNER JOIN y",
+            $this->qb->select(
+                $this->qb->field("id")
+            )->from(
+                $this->qb->table("product")
+            )->innerJoin(
+                $this->qb->table("x")
+            )->merge(
+                $this->qb->innerJoin(
+                    $this->qb->table("y")
+                )
+            )->getSQL()
+        );
+    }
+
+    public function test_queryBuilders_are_merged__groupBy_are_concatenated()
+    {
+        $this->assertEquals(
+            "SELECT id FROM product GROUP BY x, y",
+            $this->qb->select(
+                $this->qb->field("id")
+            )->from(
+                $this->qb->table("product")
+            )->groupBy(
+                $this->qb->field("x")
+            )->merge(
+                $this->qb->groupBy(
+                    $this->qb->field("y")
+                )
+            )->getSQL()
+        );
+    }
+
+    public function test_queryBuilders_are_merged__orderBy_are_concatenated()
+    {
+        $this->assertEquals(
+            "SELECT id FROM product ORDER BY x, y",
+            $this->qb->select(
+                $this->qb->field("id")
+            )->from(
+                $this->qb->table("product")
+            )->orderBy(
+                $this->qb->field("x")
+            )->merge(
+                $this->qb->orderBy(
+                    $this->qb->field("y")
+                )
+            )->getSQL()
+        );
+    }
 }

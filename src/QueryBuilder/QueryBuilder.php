@@ -176,52 +176,96 @@ class QueryBuilder extends AbstractMappable
         return implode(" ", $parts);
     }
 
+    public function renameTablesAndFields()
+    {
+        if (!$this->tablePrefix && !$this->aliasSuffix) {
+            return $this;
+        }
+
+        $aliases = [];
+
+        $this->map(function ($fragment) use (&$aliases) {
+            if ($fragment instanceof Table && $fragment->getAlias()) {
+                $aliases[$fragment->getAlias()] = true;
+            }
+            return $fragment;
+        });
+
+        $renamed = $this->map(function ($fragment) use ($aliases) {
+            if ($fragment instanceof Table) {
+                if (!array_key_exists($fragment->getTableName(), $aliases)) {
+                    $table = $fragment->setTableName(
+                        $this->tablePrefix . $fragment->getTableName()
+                    );
+                } else {
+                    $table = $fragment;
+                }
+
+                if ($table->getAlias()) {
+                    return $table->alias($table->getAlias() . $this->aliasSuffix);
+                } else {
+                    return $table;
+                }
+            } else if (
+                $fragment instanceof Field &&
+                $fragment->getTableName()
+            ) {
+                if (!array_key_exists($fragment->getTableName(), $aliases)) {
+                    return $fragment->setTableName(
+                        $this->tablePrefix . $fragment->getTableName()
+                    );
+                } else {
+                    return $fragment->setTableName(
+                        $fragment->getTableName() . $this->aliasSuffix
+                    );
+                }
+            } else {
+                return $fragment;
+            }
+        });
+
+        $renamed->tablePrefix = '';
+        $renamed->aliasSuffix = '';
+
+        return $renamed;
+    }
+
+    public function merge(QueryBuilder $other)
+    {
+        $lhs = $this->renameTablesAndFields();
+        $rhs = $other->renameTablesAndFields();
+
+        $lhs->select = array_merge(
+            $lhs->select, $rhs->select
+        );
+
+        if ($rhs->from) {
+            $lhs->from = $rhs->from;
+        }
+
+        $lhs->joins = array_merge(
+            $lhs->joins, $rhs->joins
+        );
+
+        if (!$lhs->where) {
+            $lhs->where = $rhs->where;
+        } else {
+            $lhs->where = $lhs->both($lhs->where, $rhs->where);
+        }
+
+        $lhs->groupBy = array_merge(
+            $lhs->groupBy, $rhs->groupBy
+        );
+
+        $lhs->orderBy = array_merge(
+            $lhs->orderBy, $rhs->orderBy
+        );
+
+        return $lhs;
+    }
+
     public function getSQL()
     {
-        if ($this->tablePrefix || $this->aliasSuffix) {
-            $aliases = [];
-
-            $this->map(function ($fragment) use (&$aliases) {
-                if ($fragment instanceof Table && $fragment->getAlias()) {
-                    $aliases[$fragment->getAlias()] = true;
-                }
-                return $fragment;
-            });
-
-            return $this->map(function ($fragment) use ($aliases) {
-                if ($fragment instanceof Table) {
-                    if (!array_key_exists($fragment->getTableName(), $aliases)) {
-                        $table = $fragment->setTableName(
-                            $this->tablePrefix . $fragment->getTableName()
-                        );
-                    } else {
-                        $table = $fragment;
-                    }
-
-                    if ($table->getAlias()) {
-                        return $table->alias($table->getAlias() . $this->aliasSuffix);
-                    } else {
-                        return $table;
-                    }
-                } else if (
-                    $fragment instanceof Field &&
-                    $fragment->getTableName()
-                ) {
-                    if (!array_key_exists($fragment->getTableName(), $aliases)) {
-                        return $fragment->setTableName(
-                            $this->tablePrefix . $fragment->getTableName()
-                        );
-                    } else {
-                        return $fragment->setTableName(
-                            $fragment->getTableName() . $this->aliasSuffix
-                        );
-                    }
-                } else {
-                    return $fragment;
-                }
-            })->doGetSQL();
-        } else {
-            return $this->doGetSQL();
-        }
+        return $this->renameTablesAndFields()->doGetSQL();
     }
 }
