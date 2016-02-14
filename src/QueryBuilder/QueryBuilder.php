@@ -12,6 +12,7 @@ class QueryBuilder extends AbstractMappable
     private $orderBy        = [];
     private $escaper        = null;
     private $tablePrefix    = '';
+    private $aliasSuffix    = '';
 
     public function __construct(ValueEscaperInterface $escaper)
     {
@@ -129,6 +130,13 @@ class QueryBuilder extends AbstractMappable
         return $qb;
     }
 
+    public function setAliasSuffix($aliasSuffix)
+    {
+        $qb = clone $this;
+        $qb->aliasSuffix = $aliasSuffix;
+        return $qb;
+    }
+
     private function doGetSQL()
     {
         $parts = [];
@@ -170,7 +178,7 @@ class QueryBuilder extends AbstractMappable
 
     public function getSQL()
     {
-        if ($this->tablePrefix) {
+        if ($this->tablePrefix || $this->aliasSuffix) {
             $aliases = [];
 
             $this->map(function ($fragment) use (&$aliases) {
@@ -181,21 +189,33 @@ class QueryBuilder extends AbstractMappable
             });
 
             return $this->map(function ($fragment) use ($aliases) {
-                if (
-                    $fragment instanceof Table &&
-                    !array_key_exists($fragment->getTableName(), $aliases)
-                ) {
-                    return $fragment->setTableName(
-                        $this->tablePrefix . $fragment->getTableName()
-                    );
+                if ($fragment instanceof Table) {
+                    if (!array_key_exists($fragment->getTableName(), $aliases)) {
+                        $table = $fragment->setTableName(
+                            $this->tablePrefix . $fragment->getTableName()
+                        );
+                    } else {
+                        $table = $fragment;
+                    }
+
+                    if ($table->getAlias()) {
+                        return $table->alias($table->getAlias() . $this->aliasSuffix);
+                    } else {
+                        return $table;
+                    }
                 } else if (
                     $fragment instanceof Field &&
-                    $fragment->getTableName() &&
-                    !array_key_exists($fragment->getTableName(), $aliases)
+                    $fragment->getTableName()
                 ) {
-                    return $fragment->setTableName(
-                        $this->tablePrefix . $fragment->getTableName()
-                    );
+                    if (!array_key_exists($fragment->getTableName(), $aliases)) {
+                        return $fragment->setTableName(
+                            $this->tablePrefix . $fragment->getTableName()
+                        );
+                    } else {
+                        return $fragment->setTableName(
+                            $fragment->getTableName() . $this->aliasSuffix
+                        );
+                    }
                 } else {
                     return $fragment;
                 }

@@ -338,4 +338,20 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
             ->getSQL()
         );
     }
+
+    public function test_table_aliases_are_suffixed()
+    {
+        $this->assertEquals(
+            "SELECT p_suffix.x FROM prefix_product AS p_suffix",
+            $this->qb->select(
+                $this->qb->field("p", "x")
+            )
+            ->from(
+                $this->qb->table("product")->alias("p")
+            )
+            ->setTablePrefix("prefix_")
+            ->setAliasSuffix("_suffix")
+            ->getSQL()
+        );
+    }
 }
