@@ -288,42 +288,6 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function test_table_name_is_prefixed_in_a_field_name_in_simple_select()
-    {
-        $this->assertEquals(
-            "SELECT prefix_product.price FROM prefix_product",
-            $this->qb
-                ->select($this->qb->field("product", "price"))
-                ->from($this->qb->table("product"))
-                ->setTablePrefix("prefix_")
-                ->getSQL()
-        );
-    }
-
-    public function test_table_name_is_prefixed_in_a_field_name_in_a_where_clause()
-    {
-        $this->assertEquals(
-            "SELECT prefix_product.price FROM prefix_product WHERE ((prefix_product.id = 2) OR (prefix_product.id = 3))",
-            $this->qb
-                ->select($this->qb->field("product", "price"))
-                ->from($this->qb->table("product"))
-                ->where(
-                    $this->qb->either(
-                        $this->qb->equal(
-                            $this->qb->field("product", "id"),
-                            $this->qb->value(2)
-                        ),
-                        $this->qb->equal(
-                            $this->qb->field("product", "id"),
-                            $this->qb->value(3)
-                        )
-                    )
-                )
-                ->setTablePrefix("prefix_")
-                ->getSQL()
-        );
-    }
-
     public function test_table_aliases_are_not_prefixed()
     {
         $this->assertEquals(

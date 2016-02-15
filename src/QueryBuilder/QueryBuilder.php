@@ -32,7 +32,7 @@ class QueryBuilder extends AbstractMappable
         return new Table($tableName);
     }
 
-    public function select(Field $field)
+    public function select(ExpressionInterface $field)
     {
         $qb = clone $this;
         $qb->select[] = $field;
@@ -71,6 +71,11 @@ class QueryBuilder extends AbstractMappable
     public function count(ExpressionInterface $a)
     {
         return (new Operation("COUNT", "prefix"))->addArgument($a);
+    }
+
+    public function distinct(ExpressionInterface $a)
+    {
+        return (new Operation("DISTINCT", "prefix"))->addArgument($a);
     }
 
     public function value($v)
@@ -142,7 +147,7 @@ class QueryBuilder extends AbstractMappable
         $parts = [];
 
         if (!empty($this->select)) {
-            $parts[] = "SELECT " . implode(", ", array_map(function (Field $f) {
+            $parts[] = "SELECT " . implode(", ", array_map(function (ExpressionInterface $f) {
                 return $f->getSQL();
             }, $this->select));
         }
@@ -182,43 +187,26 @@ class QueryBuilder extends AbstractMappable
             return $this;
         }
 
-        $aliases = [];
-
-        $this->map(function ($fragment) use (&$aliases) {
-            if ($fragment instanceof Table && $fragment->getAlias()) {
-                $aliases[$fragment->getAlias()] = true;
-            }
-            return $fragment;
-        });
-
-        $renamed = $this->map(function ($fragment) use ($aliases) {
+        $renamed = $this->map(function ($fragment) {
             if ($fragment instanceof Table) {
-                if (!array_key_exists($fragment->getTableName(), $aliases)) {
-                    $table = $fragment->setTableName(
+                if ($fragment->getAlias()) {
+                    return $fragment->alias(
+                        $fragment->getAlias() . $this->aliasSuffix
+                    )->setTableName(
                         $this->tablePrefix . $fragment->getTableName()
                     );
                 } else {
-                    $table = $fragment;
-                }
-
-                if ($table->getAlias()) {
-                    return $table->alias($table->getAlias() . $this->aliasSuffix);
-                } else {
-                    return $table;
+                    return $fragment->setTableName(
+                        $this->tablePrefix . $fragment->getTableName()
+                    );
                 }
             } else if (
                 $fragment instanceof Field &&
                 $fragment->getTableName()
             ) {
-                if (!array_key_exists($fragment->getTableName(), $aliases)) {
-                    return $fragment->setTableName(
-                        $this->tablePrefix . $fragment->getTableName()
-                    );
-                } else {
-                    return $fragment->setTableName(
-                        $fragment->getTableName() . $this->aliasSuffix
-                    );
-                }
+                return $fragment->setTableName(
+                    $fragment->getTableName() . $this->aliasSuffix
+                );
             } else {
                 return $fragment;
             }
