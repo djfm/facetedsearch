@@ -158,6 +158,18 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    public function test_all_expression()
+    {
+        $this->assertEquals(
+            "((a AND b) AND c)",
+            $this->qb->all([
+                $this->qb->field("a"),
+                $this->qb->field("b"),
+                $this->qb->field("c")
+            ])->getSQL()
+        );
+    }
+
     public function test_either_expression()
     {
         $this->assertEquals(
@@ -166,6 +178,18 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
                 $this->qb->field("a"),
                 $this->qb->field("b")
             )->getSQL()
+        );
+    }
+
+    public function test_any_expression()
+    {
+        $this->assertEquals(
+            "((a OR b) OR c)",
+            $this->qb->any([
+                $this->qb->field("a"),
+                $this->qb->field("b"),
+                $this->qb->field("c")
+            ])->getSQL()
         );
     }
 

@@ -63,9 +63,31 @@ class QueryBuilder extends AbstractMappable
         return (new Operation("both"))->addArgument($a)->addArgument($b);
     }
 
+    public function all(array $expressions)
+    {
+        $exp = array_shift($expressions);
+
+        while (!empty($expressions)) {
+            $exp = $this->both($exp, array_shift($expressions));
+        }
+
+        return $exp;
+    }
+
     public function either(ExpressionInterface $a, ExpressionInterface $b)
     {
         return (new Operation("either"))->addArgument($a)->addArgument($b);
+    }
+
+    public function any(array $expressions)
+    {
+        $exp = array_shift($expressions);
+
+        while (!empty($expressions)) {
+            $exp = $this->either($exp, array_shift($expressions));
+        }
+
+        return $exp;
     }
 
     public function count(ExpressionInterface $a)
