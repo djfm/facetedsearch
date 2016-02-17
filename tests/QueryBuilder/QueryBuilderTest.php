@@ -343,6 +343,21 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    public function test_table_aliases_are_suffixed_unless_nosuffix_is_used()
+    {
+        $this->assertEquals(
+            "SELECT p.x FROM product AS p",
+            $this->qb->select(
+                $this->qb->field("p", "x")->noSuffix()
+            )
+            ->from(
+                $this->qb->table("product")->alias("p")
+            )
+            ->setAliasSuffix("_suffix")
+            ->getSQL()
+        );
+    }
+
     public function test_queryBuilders_are_merged__where_is_merged_with_and()
     {
         $this->assertEquals(

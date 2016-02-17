@@ -224,7 +224,8 @@ class QueryBuilder extends AbstractMappable
                 }
             } else if (
                 $fragment instanceof Field &&
-                $fragment->getTableName()
+                $fragment->getTableName() &&
+                !$fragment->getNoSuffix()
             ) {
                 return $fragment->setTableName(
                     $fragment->getTableName() . $this->aliasSuffix

@@ -6,6 +6,7 @@ class Field implements ExpressionInterface
 {
     private $tableName;
     private $fieldName;
+    private $noSuffix = false;
     private $alias;
 
     public function __construct($tableName, $fieldName)
@@ -40,5 +41,17 @@ class Field implements ExpressionInterface
         $field = clone $this;
         $field->alias = $alias;
         return $field;
+    }
+
+    public function noSuffix()
+    {
+        $field = clone $this;
+        $field->noSuffix = true;
+        return $field;
+    }
+
+    public function getNoSuffix()
+    {
+        return $this->noSuffix;
     }
 }
