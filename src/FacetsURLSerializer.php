@@ -10,10 +10,6 @@ class FacetsURLSerializer
 {
     private function decodeFacetType($type)
     {
-        if ($type === '@') {
-            return 'attribute';
-        }
-
         return $type;
     }
 
