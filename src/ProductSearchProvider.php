@@ -11,6 +11,7 @@ use PrestaShop\PrestaShop\Core\Product\Search\Facet;
 use PrestaShop\PrestaShop\Core\Product\Search\FacetCollection;
 use PrestaShop\PrestaShop\Core\Product\Search\Filter;
 use Db;
+use ReflectionClass;
 
 class ProductSearchProvider implements ProductSearchProviderInterface
 {
@@ -68,23 +69,34 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         ;
     }
 
-    private function getFacetDriver($facetType)
+    private function getFacetDriver($facetType, ProductSearchContext $context)
     {
         $className = 'PrestaShop\\FacetedSearch\\' . ucfirst($facetType) . 'FacetDriver';
-        return new $className;
+        $refl = new ReflectionClass($className);
+        return $refl->newInstanceArgs([
+            $this->qb,
+            $context
+        ]);
     }
 
     private function generateCountSQL(ProductSearchContext $context, ProductSearchQuery $query)
     {
         $qb = $this->getBaseQueryBuilder($context, $query);
 
-        /*
+
         $facets = (new FacetsURLSerializer)->unserialize($query->getEncodedFacets());
 
         foreach ($facets as $facetIndex => $facet) {
-            $facetType = $facet->getType();
-            $driver    = $this->getFacetDriver($facetType);
-        }*/
+            $driver = $this->getFacetDriver($facet->getType(), $context);
+            $facetQb = $driver
+                ->getQueryBuilderForMainQuery($facet)
+                ->setAliasSuffix(
+                    "_" . $facet->getType() . "_" . $facetIndex
+                )
+            ;
+
+            $qb = $qb->merge($facetQb);
+        }
 
         return $qb->select(
             $qb->count($qb->distinct($qb->field("p", "id_product")))
@@ -96,7 +108,6 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         $result = new ProductSearchResult;
 
         $sql = $this->generateCountSQL($context, $query);
-        print_r($sql);
         $count = $this->db->getValue($sql);
         $result->setTotalProductsCount($count);
 
