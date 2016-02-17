@@ -34,7 +34,7 @@ class FacetsURLSerializer
 
             foreach ($data as $filterValue) {
                 $filter = new Filter;
-                $filter->setValue($filterValue);
+                $filter->setValue($filterValue)->setActive(true);
                 $facet->addFilter($filter);
             }
 

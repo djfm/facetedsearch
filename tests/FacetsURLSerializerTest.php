@@ -25,5 +25,6 @@ class FacetsURLSerializerTest extends PHPUnit_Framework_TestCase
         $filter = $facet->getFilters()[0];
         $this->assertInstanceOf('PrestaShop\PrestaShop\Core\Product\Search\Filter', $filter);
         $this->assertEquals('Blue', $filter->getValue());
+        $this->assertTrue($filter->isActive());
     }
 }
