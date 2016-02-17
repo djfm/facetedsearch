@@ -351,7 +351,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
                 $this->qb->field("p", "x")->noSuffix()
             )
             ->from(
-                $this->qb->table("product")->alias("p")
+                $this->qb->table("product")->alias("p")->noSuffix()
             )
             ->setAliasSuffix("_suffix")
             ->getSQL()

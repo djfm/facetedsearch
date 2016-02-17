@@ -212,11 +212,16 @@ class QueryBuilder extends AbstractMappable
         $renamed = $this->map(function ($fragment) {
             if ($fragment instanceof Table) {
                 if ($fragment->getAlias()) {
-                    return $fragment->alias(
-                        $fragment->getAlias() . $this->aliasSuffix
-                    )->setTableName(
+                    $prefixed = $fragment->setTableName(
                         $this->tablePrefix . $fragment->getTableName()
                     );
+                    if ($prefixed->getNoSuffix()) {
+                        return $prefixed;
+                    } else {
+                        return $prefixed->alias(
+                            $prefixed->getAlias() . $this->aliasSuffix
+                        );
+                    }
                 } else {
                     return $fragment->setTableName(
                         $this->tablePrefix . $fragment->getTableName()

@@ -6,6 +6,7 @@ class Table
 {
     private $tableName;
     private $alias;
+    private $noSuffix = false;
 
     public function __construct($tableName)
     {
@@ -43,5 +44,17 @@ class Table
     public function getAlias()
     {
         return $this->alias;
+    }
+
+    public function noSuffix()
+    {
+        $table = clone $this;
+        $table->noSuffix = true;
+        return $table;
+    }
+
+    public function getNoSuffix()
+    {
+        return $this->noSuffix;
     }
 }
