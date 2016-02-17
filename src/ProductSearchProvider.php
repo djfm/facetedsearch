@@ -71,7 +71,7 @@ class ProductSearchProvider implements ProductSearchProviderInterface
 
     private function getFacetDriver($facetType, ProductSearchContext $context)
     {
-        $className = 'PrestaShop\\FacetedSearch\\' . ucfirst($facetType) . 'FacetDriver';
+        $className = 'PrestaShop\\FacetedSearch\\FacetDriver\\' . ucfirst($facetType) . 'FacetDriver';
         $refl = new ReflectionClass($className);
         return $refl->newInstanceArgs([
             $this->qb,

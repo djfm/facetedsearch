@@ -1,25 +1,12 @@
 <?php
 
-namespace PrestaShop\FacetedSearch;
+namespace PrestaShop\FacetedSearch\FacetDriver;
 
-use PrestaShop\FacetedSearch\QueryBuilder\QueryBuilder;
 use PrestaShop\PrestaShop\Core\Product\Search\Facet;
 use PrestaShop\PrestaShop\Core\Product\Search\Filter;
-use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchContext;
 
-class AttributeFacetDriver
+class AttributeFacetDriver extends AbstractFacetDriver
 {
-    private $qb;
-    private $context;
-
-    public function __construct(
-        QueryBuilder $qb,
-        ProductSearchContext $context
-    ) {
-        $this->qb = $qb;
-        $this->context = $context;
-    }
-
     public function getQueryBuilderForMainQuery(Facet $facet)
     {
         return $this->qb
