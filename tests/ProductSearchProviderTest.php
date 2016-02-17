@@ -52,10 +52,6 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
         $encodedFacets,
         $expected_count
     ) {
-        if ($encodedFacets) {
-            //$this->markTestSkipped("Refactoring, no encoded facets support yet.");
-        }
-
         $query = (new ProductSearchQuery)
             ->setQueryType('category')
             ->setIdCategory($id_category)
