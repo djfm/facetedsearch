@@ -40,7 +40,7 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
             [4, null, 2],
             [2, 'attribute-Color-Blue', 2],
             [2, 'attribute-Color-Blue-Green', 3],
-            //[2, 'feature-Styles-Dressy', 1]
+            [2, 'feature-Styles-Dressy', 1]
         ];
     }
 
