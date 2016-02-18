@@ -69,7 +69,6 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
 
     public function dataProvider_for_test_search_in_category_returns_additional_filters_with_correct_magnitude()
     {
-        $this->markTestSkipped("Refactoring, won't work right now.");
         return [
             [2, null, ['Color' => [
                 'Beige' => 1,
@@ -113,36 +112,46 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
         );
 
         foreach ($expectedMagnitudes as $facetLabel => $filtersLabelsAndMagnitudes) {
-            foreach ($result->getFacetCollection()->getFacets() as $facet) {
-                if ($facet->getLabel() === $facetLabel) {
-                    foreach ($filtersLabelsAndMagnitudes as $filterLabel => $magnitude) {
-                        foreach ($facet->getFilters() as $filter) {
-                            if ($filter->getLabel() === $filterLabel) {
-                                $this->assertEquals(
-                                    $magnitude,
-                                    $filter->getMagnitude(),
-                                    sprintf(
-                                        'Wrong magnitude for filter `%1$s` in facet `%2$s`.',
-                                        $filterLabel,
-                                        $facetLabel
-                                    )
-                                );
-                                continue 2;
-                            }
-                            throw new Exception(sprintf(
-                                'Expected a facet labeled `%1$s` with filter `%2$s`, but the filter was not found.',
-                                $facetLabel,
-                                $filterLabel
-                            ));
-                        }
-                    }
-                    continue;
-                }
-                throw new Exception(sprintf(
-                    'Expected a facet with label `%1$s` in the facetCollection inside the search result, but none was found.',
-                    $facetLabel
-                ));
+            $facet = $this->getFacetByLabel($result->getFacetCollection()->getFacets(), $facetLabel);
+            foreach ($filtersLabelsAndMagnitudes as $filterLabel => $magnitude) {
+                $filter = $this->getFilterByLabel($facet, $filterLabel);
+                $this->assertEquals(
+                    $magnitude,
+                    $filter->getMagnitude(),
+                    sprintf(
+                        'Wrong magnitude for `%1$s` filter of the `%2$s` facet.',
+                        $filterLabel, $facetLabel
+                    )
+                );
             }
         }
+    }
+
+    private function getFacetByLabel(array $facets, $label)
+    {
+        foreach ($facets as $facet) {
+            if ($facet->getLabel() === $label) {
+                return $facet;
+            }
+        }
+
+        throw new Exception(sprintf(
+            'Could not find a facet labelled `%1$s` in the provided list of `%2$s` facets.',
+            $label, count($facets)
+        ));
+    }
+
+    private function getFilterByLabel(Facet $facet, $label)
+    {
+        foreach ($facet->getFilters() as $filter) {
+            if ($filter->getLabel() === $label) {
+                return $filter;
+            }
+        }
+
+        throw new Exception(sprintf(
+            'Could not find a filter labelled `%1$s` in the `%2$s` facet containing `%3$s` filters.',
+            $label, $facet->getLabel(), count($facet->getFilters())
+        ));
     }
 }

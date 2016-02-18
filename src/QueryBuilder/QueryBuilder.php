@@ -112,8 +112,12 @@ class QueryBuilder extends AbstractMappable
         return $qb;
     }
 
-    public function andWhere(ExpressionInterface $expression)
+    public function andWhere(ExpressionInterface $expression = null)
     {
+        if (null === $expression) {
+            return $this;
+        }
+
         if (null !== $this->where) {
             return $this->where($this->both(
                 $this->where,
@@ -124,8 +128,12 @@ class QueryBuilder extends AbstractMappable
         }
     }
 
-    public function orWhere(ExpressionInterface $expression)
+    public function orWhere(ExpressionInterface $expression = null)
     {
+        if (null === $expression) {
+            return $this;
+        }
+
         if (null !== $this->where) {
             return $this->where($this->either(
                 $this->where,
@@ -265,7 +273,7 @@ class QueryBuilder extends AbstractMappable
 
         if (!$lhs->where) {
             $lhs->where = $rhs->where;
-        } else {
+        } else if ($rhs->where) {
             $lhs->where = $lhs->both($lhs->where, $rhs->where);
         }
 

@@ -51,8 +51,23 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         }
     }
 
-    private function getBaseQueryBuilder(ProductSearchContext $context, ProductSearchQuery $query)
-    {
+    private function getFacetDriver(
+        $facetType,
+        ProductSearchContext $context
+    ) {
+        $className = 'PrestaShop\\FacetedSearch\\FacetDriver\\' . ucfirst($facetType) . 'FacetDriver';
+        $refl = new ReflectionClass($className);
+        return $refl->newInstanceArgs([
+            $this->qb,
+            $context,
+            $this->db
+        ]);
+    }
+
+    private function getBaseQueryBuilder(
+        ProductSearchContext $context,
+        ProductSearchQuery $query
+    ) {
         return $this->qb
             ->from(
                 $this->qb->table("product_shop")->alias("p")
@@ -69,22 +84,12 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         ;
     }
 
-    private function getFacetDriver($facetType, ProductSearchContext $context)
-    {
-        $className = 'PrestaShop\\FacetedSearch\\FacetDriver\\' . ucfirst($facetType) . 'FacetDriver';
-        $refl = new ReflectionClass($className);
-        return $refl->newInstanceArgs([
-            $this->qb,
-            $context
-        ]);
-    }
-
-    private function generateCountSQL(ProductSearchContext $context, ProductSearchQuery $query)
-    {
+    private function getConstrainedQueryBuilderForFacets(
+        ProductSearchContext $context,
+        ProductSearchQuery $query,
+        array $facets
+    ) {
         $qb = $this->getBaseQueryBuilder($context, $query);
-
-
-        $facets = (new FacetsURLSerializer)->unserialize($query->getEncodedFacets());
 
         foreach ($facets as $facetIndex => $facet) {
             $driver = $this->getFacetDriver($facet->getType(), $context);
@@ -94,24 +99,102 @@ class ProductSearchProvider implements ProductSearchProviderInterface
                     "_" . $facet->getType() . "_" . $facetIndex
                 )
             ;
-
             $qb = $qb->merge($facetQb);
         }
 
+        return $qb;
+    }
+
+    private function getConstrainedQueryBuilder(
+        ProductSearchContext $context,
+        ProductSearchQuery $query
+    ) {
+        $facets = (new FacetsURLSerializer)->unserialize($query->getEncodedFacets());
+        return $this->getConstrainedQueryBuilderForFacets($context, $query, $facets);
+    }
+
+    private function generateCountSQL(
+        ProductSearchContext $context,
+        ProductSearchQuery $query
+    ) {
+        $qb = $this->getConstrainedQueryBuilder($context, $query);
         return $qb->select(
             $qb->count($qb->distinct($qb->field("p", "id_product")))
         )->getSQL();
     }
 
-    public function runQuery(ProductSearchContext $context, ProductSearchQuery $query)
+    private function mapFacets(array $facets, callable $cb)
     {
+        $mapped = [];
+
+        foreach ($facets as $key => $facet) {
+            $otherFacets = $facets;
+            unset($otherFacets[$key]);
+            $mapped[] = $cb($facet, $otherFacets);
+        }
+
+        return $mapped;
+    }
+
+    private function getUpdatedFacets(
+        ProductSearchContext $context,
+        ProductSearchQuery $query
+    ) {
+        $facetTypes = ['attribute'];
+        $qb = $this->getBaseQueryBuilder($context, $query);
+        $availableFacets = [];
+
+        foreach ($facetTypes as $facetType) {
+            $facetDriver = $this->getFacetDriver(
+                $facetType,
+                $context
+            );
+
+            $availableFacets = array_merge(
+                $availableFacets,
+                $facetDriver->getAvailableFacets($qb)
+            );
+        }
+
+        $currentFacets = (new FacetsURLSerializer)->unserialize($query->getEncodedFacets());
+
+        $facets = (new FacetsMerger)->merge($availableFacets, $currentFacets);
+
+        return $this->mapFacets($facets, function (
+            Facet $facet,
+            array $otherFacets
+        ) use (
+            $context,
+            $query
+        ) {
+            $facetDriver = $this->getFacetDriver(
+                $facet->getType(),
+                $context
+            );
+
+            return $facetDriver->updateFacet(
+                $this->getConstrainedQueryBuilderForFacets(
+                    $context,
+                    $query,
+                    $otherFacets
+                ),
+                clone $facet
+            );
+        });
+    }
+
+    public function runQuery(
+        ProductSearchContext $context,
+        ProductSearchQuery $query
+    ) {
         $result = new ProductSearchResult;
 
         $sql = $this->generateCountSQL($context, $query);
         $count = $this->db->getValue($sql);
         $result->setTotalProductsCount($count);
 
-        // $this->addFacetsToResult($context, $query, $result);
+        $facets = $this->getUpdatedFacets($context, $query);
+        $result->setFacetCollection((new FacetCollection)->setFacets($facets));
 
         return $result;
     }

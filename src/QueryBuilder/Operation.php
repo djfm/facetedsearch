@@ -7,6 +7,7 @@ class Operation extends AbstractMappable implements ExpressionInterface
     private $operator;
     private $arguments = [];
     private $fixity;
+    private $alias;
 
     public function __construct($operator, $fixity = 'infix')
     {
@@ -19,6 +20,22 @@ class Operation extends AbstractMappable implements ExpressionInterface
         $op = clone $this;
         $op->arguments[] = $arg;
         return $op;
+    }
+
+    public function alias($alias)
+    {
+        $exp = clone $this;
+        $exp->alias = $alias;
+        return $exp;
+    }
+
+    private function doAlias($str)
+    {
+        if ($this->alias) {
+            return $str . " AS " . $this->alias;
+        } else {
+            return $str;
+        }
     }
 
     public function getSQL()
@@ -36,12 +53,12 @@ class Operation extends AbstractMappable implements ExpressionInterface
                     break;
             }
 
-            return "(" . $this->arguments[0]->getSQL() . " $operator " . $this->arguments[1]->getSQL() . ")";
+            return $this->doAlias("(" . $this->arguments[0]->getSQL() . " $operator " . $this->arguments[1]->getSQL() . ")");
         } else if ($this->fixity === 'prefix'){
             $args = array_map(function (ExpressionInterface $e) {
                 return $e->getSQL();
             }, $this->arguments);
-            return $this->operator . "(" . implode(", ", $args) . ")";
+            return $this->doAlias($this->operator . "(" . implode(", ", $args) . ")");
         }
     }
 }

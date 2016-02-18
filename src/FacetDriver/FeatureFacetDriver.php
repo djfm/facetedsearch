@@ -2,6 +2,7 @@
 
 namespace PrestaShop\FacetedSearch\FacetDriver;
 
+use PrestaShop\FacetedSearch\QueryBuilder\QueryBuilder;
 use PrestaShop\PrestaShop\Core\Product\Search\Facet;
 use PrestaShop\PrestaShop\Core\Product\Search\Filter;
 
@@ -60,5 +61,10 @@ class FeatureFacetDriver extends AbstractFacetDriver
                 )
             )
         ;
+    }
+
+    public function updateFacet(QueryBuilder $baseQuery, Facet $facet)
+    {
+        return $facet;
     }
 }
