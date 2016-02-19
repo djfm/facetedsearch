@@ -1,7 +1,6 @@
 <?php
 
-require implode(DIRECTORY_SEPARATOR, ['vendor', 'autoload.php']);
-
+require implode(DIRECTORY_SEPARATOR, [__DIR__, 'vendor', 'autoload.php']);
 use PrestaShop\FacetedSearch\ProductSearchProvider;
 
 class FacetedSearch extends Module
