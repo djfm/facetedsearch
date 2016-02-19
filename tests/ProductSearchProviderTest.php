@@ -67,6 +67,37 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    public function dataProvider_for_test_search_products_in_category_pagination()
+    {
+        return [
+            [2, null, 2]
+        ];
+    }
+
+    /**
+     * @dataProvider dataProvider_for_test_search_products_in_category_pagination
+     */
+    public function test_search_products_in_category_pagination(
+        $id_category,
+        $encodedFacets,
+        $resultsPerPage
+    ) {
+        $query = (new ProductSearchQuery)
+            ->setQueryType('category')
+            ->setIdCategory($id_category)
+            ->setEncodedFacets($encodedFacets)
+            ->setResultsPerPage($resultsPerPage)
+        ;
+
+        $this->assertCount(
+            $resultsPerPage,
+            $this
+                ->getProductSearchProvider($query)
+                ->runQuery($this->getProductSearchContext(), $query)
+                ->getProducts()
+        );
+    }
+
     public function dataProvider_for_test_search_in_category_returns_additional_filters_with_correct_magnitude()
     {
         return [

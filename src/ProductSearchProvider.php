@@ -123,6 +123,25 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         )->getSQL();
     }
 
+    private function generateSelectSQL(
+        ProductSearchContext $context,
+        ProductSearchQuery $query
+    ) {
+        $qb = $this->getConstrainedQueryBuilder($context, $query);
+        return $qb
+            ->select(
+                $qb->field("p", "id_product")->alias("id_product")
+            )
+            ->groupBy(
+                $qb->field("p", "id_product")
+            )
+            ->limit(
+                $query->getResultsPerPage()
+            )
+            ->getSQL()
+        ;
+    }
+
     private function mapFacets(array $facets, callable $cb)
     {
         $mapped = [];
@@ -195,6 +214,10 @@ class ProductSearchProvider implements ProductSearchProviderInterface
 
         $facets = $this->getUpdatedFacets($context, $query);
         $result->setFacetCollection((new FacetCollection)->setFacets($facets));
+
+        $sql = $this->generateSelectSQL($context, $query);
+        $products = $this->db->executeS($sql);
+        $result->setProducts($products);
 
         return $result;
     }
