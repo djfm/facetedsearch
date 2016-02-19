@@ -32,7 +32,7 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         ProductSearchContext $context,
         ProductSearchQuery $query
     ) {
-        if ($query->getQueryType() === 'category') {
+        if ($query->getIdCategory()) {
             return $this->qb
                 ->innerJoin(
                     $this->qb->table("category_product")->alias("cp"),
