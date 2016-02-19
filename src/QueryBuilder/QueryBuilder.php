@@ -14,6 +14,7 @@ class QueryBuilder extends AbstractMappable
     private $tablePrefix    = '';
     private $aliasSuffix    = '';
     private $limit          = null;
+    private $offset         = null;
 
     public function __construct(ValueEscaperInterface $escaper)
     {
@@ -211,6 +212,9 @@ class QueryBuilder extends AbstractMappable
 
         if (null !== $this->limit) {
             $parts[] = "LIMIT " . (int)$this->limit;
+            if (null !== $this->offset) {
+                $parts[] = "OFFSET " . (int)$this->offset;
+            }
         }
 
         return implode(" ", $parts);
@@ -297,6 +301,13 @@ class QueryBuilder extends AbstractMappable
     {
         $qb = clone $this;
         $qb->limit = (int)$limit;
+        return $qb;
+    }
+
+    public function offset($offset)
+    {
+        $qb = clone $this;
+        $qb->offset = (int)$offset;
         return $qb;
     }
 

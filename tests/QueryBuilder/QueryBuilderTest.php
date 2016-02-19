@@ -483,4 +483,21 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase
                 ->getSQL()
         );
     }
+
+    public function test_queryBuilder_offset()
+    {
+        $this->assertEquals(
+            "SELECT id FROM product LIMIT 2 OFFSET 4",
+            $this->qb
+                ->select(
+                    $this->qb->field("id")
+                )
+                ->from(
+                    $this->qb->table("product")
+                )
+                ->limit(2)
+                ->offset(4)
+                ->getSQL()
+        );
+    }
 }
