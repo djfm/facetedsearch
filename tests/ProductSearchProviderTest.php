@@ -89,12 +89,33 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
             ->setResultsPerPage($resultsPerPage)
         ;
 
+        $products = $this
+            ->getProductSearchProvider($query)
+            ->runQuery($this->getProductSearchContext(), $query)
+            ->getProducts()
+        ;
+
         $this->assertCount(
             $resultsPerPage,
-            $this
-                ->getProductSearchProvider($query)
-                ->runQuery($this->getProductSearchContext(), $query)
-                ->getProducts()
+            $products
+        );
+
+        $firstProduct = $products[0];
+
+        $query->setPage(2);
+
+        $newProducts = $this
+            ->getProductSearchProvider($query)
+            ->runQuery($this->getProductSearchContext(), $query)
+            ->getProducts()
+        ;
+
+        $otherProduct = $newProducts[0];
+
+        $this->assertNotEquals(
+            $firstProduct,
+            $otherProduct,
+            'First result of first page is same as first result of second page, that can\'t be right.'
         );
     }
 

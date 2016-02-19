@@ -138,6 +138,9 @@ class ProductSearchProvider implements ProductSearchProviderInterface
             ->limit(
                 $query->getResultsPerPage()
             )
+            ->offset(
+                $query->getResultsPerPage() * ($query->getPage() - 1)
+            )
             ->getSQL()
         ;
     }
