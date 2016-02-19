@@ -13,6 +13,7 @@ class QueryBuilder extends AbstractMappable
     private $escaper        = null;
     private $tablePrefix    = '';
     private $aliasSuffix    = '';
+    private $limit          = null;
 
     public function __construct(ValueEscaperInterface $escaper)
     {
@@ -208,6 +209,10 @@ class QueryBuilder extends AbstractMappable
             }, $this->orderBy));
         }
 
+        if (null !== $this->limit) {
+            $parts[] = "LIMIT " . (int)$this->limit;
+        }
+
         return implode(" ", $parts);
     }
 
@@ -286,6 +291,13 @@ class QueryBuilder extends AbstractMappable
         );
 
         return $lhs;
+    }
+
+    public function limit($limit)
+    {
+        $qb = clone $this;
+        $qb->limit = (int)$limit;
+        return $qb;
     }
 
     public function getSQL()
