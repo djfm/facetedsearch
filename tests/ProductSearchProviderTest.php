@@ -77,7 +77,8 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
                 'Orange' => 3,
                 'Blue' => 2,
                 'Green' => 1,
-                'Yellow' => 3
+                'Yellow' => 3,
+                'Pink'  => 1
             ]]],
             [2, 'attribute-Color-Blue', [
                 'Styles' => [
@@ -129,6 +130,16 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
                     sprintf(
                         'Wrong magnitude for `%1$s` filter of the `%2$s` facet.',
                         $filterLabel, $facetLabel
+                    )
+                );
+            }
+            foreach ($facet->getFilters() as $filter) {
+                $this->assertArrayHasKey(
+                    $filter->getLabel(),
+                    $filtersLabelsAndMagnitudes,
+                    sprintf(
+                        'A filter labeled `%1$s` with magnitude `%2$s` was found in the `%3$s` facet, but it was not expected.',
+                        $filter->getLabel(), $filter->getMagnitude(), $facet->getLabel()
                     )
                 );
             }
