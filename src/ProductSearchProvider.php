@@ -140,7 +140,7 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         ProductSearchContext $context,
         ProductSearchQuery $query
     ) {
-        $facetTypes = ['attribute'];
+        $facetTypes = ['attribute', 'feature'];
         $qb = $this->getBaseQueryBuilder($context, $query);
         $availableFacets = [];
 

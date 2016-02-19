@@ -78,6 +78,11 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
                 'Blue' => 2,
                 'Green' => 1,
                 'Yellow' => 3
+            ]]],
+            [2, null, ['Styles' => [
+                'Casual' => 3,
+                'Dressy' => 1,
+                'Girly' => 3
             ]]]
         ];
     }
@@ -150,8 +155,10 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
         }
 
         throw new Exception(sprintf(
-            'Could not find a filter labelled `%1$s` in the `%2$s` facet containing `%3$s` filters.',
-            $label, $facet->getLabel(), count($facet->getFilters())
+            'Could not find a filter labelled `%1$s` in the `%2$s` facet containing `%3$s` filters (%4$s).',
+            $label, $facet->getLabel(), count($facet->getFilters()), implode(", ", array_map(function (Filter $f) {
+                return $f->getLabel();
+            }, $facet->getFilters()))
         ));
     }
 }

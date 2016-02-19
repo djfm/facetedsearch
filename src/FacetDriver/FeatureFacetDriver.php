@@ -8,7 +8,7 @@ use PrestaShop\PrestaShop\Core\Product\Search\Filter;
 
 class FeatureFacetDriver extends AbstractFacetDriver
 {
-    public function getQueryBuilderForMainQuery(Facet $facet)
+    private function getBaseQueryBuilder()
     {
         return $this->qb
             ->innerJoin(
@@ -31,6 +31,13 @@ class FeatureFacetDriver extends AbstractFacetDriver
                     )
                 )
             )
+        ;
+    }
+
+    public function getQueryBuilderForMainQuery(Facet $facet)
+    {
+        return $this
+            ->getBaseQueryBuilder()
             ->innerJoin(
                 $this->qb->table("feature_value_lang")->alias("fvl"),
                 $this->qb->both(
@@ -63,8 +70,77 @@ class FeatureFacetDriver extends AbstractFacetDriver
         ;
     }
 
-    public function updateFacet(QueryBuilder $baseQuery, Facet $facet)
+    public function getAvailableFacets(QueryBuilder $baseQuery)
     {
-        return $facet;
+        $availableFacets = [];
+
+        $qb = $baseQuery->merge(
+            $this
+                ->getBaseQueryBuilder()
+                ->select($this->qb->field("fl", "name")->alias("label"))
+                ->groupBy($this->qb->field("fl", "name"))
+        );
+
+        foreach ($this->db->executeS($qb->getSQL()) as $row) {
+            $availableFacets[] = (new Facet)
+                ->setType('feature')
+                ->setLabel($row['label'])
+            ;
+        }
+
+        return $availableFacets;
+    }
+
+    public function updateFacet(QueryBuilder $constrainedQuery, Facet $facet)
+    {
+        $qb = $constrainedQuery
+            ->merge($this
+                ->getBaseQueryBuilder()
+                ->innerJoin(
+                    $this->qb->table("feature_value_lang")->alias("fvl"),
+                    $this->qb->both(
+                        $this->qb->equal(
+                            $this->qb->field("fvl", "id_feature_value"),
+                            $this->qb->field("fp", "id_feature_value")
+                        ),
+                        $this->qb->equal(
+                            $this->qb->field("fvl", "id_lang"),
+                            $this->qb->value($this->context->getIdLang())
+                        )
+                    )
+                )
+                ->where(
+                    $this->qb->equal(
+                        $this->qb->field("fl", "name"),
+                        $this->qb->value($facet->getLabel())
+                    )
+                )
+                ->groupBy(
+                    $this->qb->field("fvl", "value")
+                )
+                ->select(
+                    $this->qb->field("fvl", "value")->alias("label")
+                )
+                ->select(
+                    $this->qb->count(
+                        $this->qb->distinct(
+                            $this->qb->field("p", "id_product")->noSuffix()
+                        )
+                    )->alias("magnitude")
+                )
+            )
+        ;
+
+        $newFacet = (new Facet)->setLabel($facet->getLabel());
+        foreach ($this->db->executeS($qb->getSQL()) as $row) {
+            $newFacet->addFilter(
+                (new Filter)
+                    ->setType("feature")
+                    ->setValue($row["label"])
+                    ->setLabel($row["label"])
+                    ->setMagnitude((int)$row["magnitude"])
+            );
+        }
+        return $newFacet;
     }
 }
