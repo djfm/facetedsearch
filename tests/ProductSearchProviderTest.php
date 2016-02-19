@@ -79,11 +79,14 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
                 'Green' => 1,
                 'Yellow' => 3
             ]]],
-            [2, null, ['Styles' => [
-                'Casual' => 3,
-                'Dressy' => 1,
-                'Girly' => 3
-            ]]]
+            [2, 'attribute-Color-Blue', [
+                'Styles' => [
+                    'Casual' => 2
+            ]], 'Size' => [
+                    'S' => 2,
+                    'M' => 2,
+                    'L' => 2
+            ]]
         ];
     }
 
