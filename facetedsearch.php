@@ -27,11 +27,16 @@ class FacetedSearch extends Module
 
     public function install()
     {
-        return parent::install() && $this->registerHook('productSearchProvider');
+        return parent::install() && $this->registerHook('productSearchProvider') && $this->registerHook('displayLeftColumn');
     }
 
     public function hookProductSearchProvider($params)
     {
         return new ProductSearchProvider(Db::getInstance());
+    }
+
+    public function hookDisplayLeftColumn($params)
+    {
+        return $this->display(__FILE__, 'facets.tpl');
     }
 }
