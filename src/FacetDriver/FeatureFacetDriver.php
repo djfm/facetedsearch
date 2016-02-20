@@ -138,8 +138,18 @@ class FeatureFacetDriver extends AbstractFacetDriver
                     ->setType("feature")
                     ->setLabel($row["label"])
                     ->setMagnitude((int)$row["magnitude"])
+                    ->setActive($this->isFilterActive($facet, $row["label"]))
             );
         }
         return $newFacet;
+    }
+
+    private function isFilterActive(Facet $facet, $filterLabel) {
+        foreach ($facet->getFilters() as $facetFilter) {
+            if ($facetFilter->getLabel() === $filterLabel) {
+                return $facetFilter->isActive();
+            }
+        }
+        return false;
     }
 }

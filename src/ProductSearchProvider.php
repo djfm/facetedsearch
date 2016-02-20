@@ -105,6 +105,17 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         return $qb;
     }
 
+    private function debugShowFacets(array $facets)
+    {
+        $labels = [];
+        foreach ($facets as $facet) {
+            $labels[] = $facet->getLabel();
+        }
+        echo "\nFacets: (" . implode(", ", $labels) . ")\n";
+
+        return $facets;
+    }
+
     private function getCurrentFacets(
         ProductSearchContext $context,
         ProductSearchQuery $query
@@ -120,7 +131,7 @@ class ProductSearchProvider implements ProductSearchProviderInterface
                 $facetType,
                 $context
             );
-
+            $facetDriver->getAvailableFacets($qb);
             $availableFacets = array_merge(
                 $availableFacets,
                 $facetDriver->getAvailableFacets($qb)

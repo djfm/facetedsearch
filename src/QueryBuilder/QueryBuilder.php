@@ -223,7 +223,7 @@ class QueryBuilder extends AbstractMappable
     public function renameTablesAndFields()
     {
         if (!$this->tablePrefix && !$this->aliasSuffix) {
-            return $this;
+            return clone $this;
         }
 
         $renamed = $this->map(function ($fragment) {
