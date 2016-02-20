@@ -267,6 +267,7 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         $facets = $this->getUpdatedFacets($context, $query);
         $this->addNextEncodedFacetsToFilters($facets);
         $result->setFacetCollection((new FacetCollection)->setFacets($facets));
+        $result->setEncodedFacets((new FacetsURLSerializer)->serialize($facets));
 
         $sql = $this->generateSelectSQL($context, $query);
         $products = $this->db->executeS($sql);
