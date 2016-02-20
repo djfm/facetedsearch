@@ -2,37 +2,37 @@
 
 namespace PrestaShop\FacetedSearch;
 
+use PrestaShop\PrestaShop\Core\Product\Search\Facet;
+use PrestaShop\PrestaShop\Core\Product\Search\Filter;
+use ReflectionClass;
+
+
 class FacetsMerger
 {
-    public function merge(array $facets, array $newFacets)
+    private function copyFacetFilters(Facet $target, Facet $source)
     {
-        $mergedFacets = [];
-        foreach ($newFacets as $newFacet) {
-            foreach ($facets as $key => $facet) {
-                if ($facet->getLabel() === $newFacet->getLabel()) {
-                    unset($facets[$key]);
-                    $merged = clone $facet;
-                    $mergedFacets[] = $merged;
-                    foreach ($newFacet->getFilters() as $newFilter) {
-                        foreach ($merged->getFilters() as &$filter) {
-                            if ($filter->getLabel() === $newFilter->getLabel()) {
-                                $filter = clone $newFilter;
-                                continue 2;
-                            }
-                        }
-                        $merged->addFilter(clone $newFilter);
-                        unset($filter);
-                    }
+        // FIXME: dirty hack, but don't want to touch the Core Facet class at the moment
+        // -- what it needs is a setFilters() method.
+        $refl = new ReflectionClass($target);
+        $filters = $refl->getProperty("filters");
+        $filters->setAccessible(true);
+        $filters->setValue($target, $source->getFilters());
+    }
+
+    public function mergeFilters(array $targetFacets, array $sourceFacets)
+    {
+        foreach ($targetFacets as $targetFacet) {
+            foreach ($sourceFacets as $sourceFacet) {
+                if ($targetFacet->getLabel() === $sourceFacet->getLabel()) {
+                    $this->copyFacetFilters(
+                        $targetFacet,
+                        $sourceFacet
+                    );
                     continue 2;
                 }
             }
-            $mergedFacets[] = clone $newFacet;
         }
 
-        foreach ($facets as $originalFacet) {
-            array_unshift($mergedFacets, clone $originalFacet);
-        }
-
-        return $mergedFacets;
+        return $targetFacets;
     }
 }

@@ -13,20 +13,19 @@ class FacetsURLSerializerTest extends PHPUnit_Framework_TestCase
         $this->serializer = new FacetsURLSerializer;
     }
 
-    public function test_unserialize_attribute_facet_with_one_filter()
+    public function test_unserialize_facet_with_one_filter()
     {
-        $facets = $this->serializer->unserialize("attribute-Color-Blue");
+        $facets = $this->serializer->unserialize("Color-Blue");
         $this->assertCount(1, $facets);
 
         $facet = $facets[0];
         $this->assertInstanceOf('PrestaShop\PrestaShop\Core\Product\Search\Facet', $facet);
-        $this->assertEquals('attribute', $facet->getType());
         $this->assertEquals('Color', $facet->getLabel());
         $this->assertCount(1, $facet->getFilters());
         $this->assertCount(1, $facet->getFilters());
         $filter = $facet->getFilters()[0];
         $this->assertInstanceOf('PrestaShop\PrestaShop\Core\Product\Search\Filter', $filter);
-        $this->assertEquals('Blue', $filter->getValue());
+        $this->assertEquals('Blue', $filter->getLabel());
         $this->assertTrue($filter->isActive());
     }
 

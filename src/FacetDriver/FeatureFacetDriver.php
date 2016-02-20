@@ -62,7 +62,7 @@ class FeatureFacetDriver extends AbstractFacetDriver
                     array_map(function (Filter $filter) {
                         return $this->qb->equal(
                             $this->qb->field("fvl", "value"),
-                            $this->qb->value($filter->getValue())
+                            $this->qb->value($filter->getLabel())
                         );
                     }, $facet->getFilters())
                 )
@@ -136,7 +136,6 @@ class FeatureFacetDriver extends AbstractFacetDriver
             $newFacet->addFilter(
                 (new Filter)
                     ->setType("feature")
-                    ->setValue($row["label"])
                     ->setLabel($row["label"])
                     ->setMagnitude((int)$row["magnitude"])
             );

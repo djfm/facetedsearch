@@ -105,11 +105,59 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         return $qb;
     }
 
+    private function getCurrentFacets(
+        ProductSearchContext $context,
+        ProductSearchQuery $query
+    ) {
+        $facetTypes = ['attribute', 'feature'];
+
+        $qb = $this->getBaseQueryBuilder($context, $query);
+
+        $availableFacets = [];
+
+        foreach ($facetTypes as $facetType) {
+            $facetDriver = $this->getFacetDriver(
+                $facetType,
+                $context
+            );
+
+            $availableFacets = array_merge(
+                $availableFacets,
+                $facetDriver->getAvailableFacets($qb)
+            );
+        }
+
+        $activeFacets = (new FacetsURLSerializer)->unserialize($query->getEncodedFacets());
+
+        (new FacetsMerger)->mergeFilters($availableFacets, $activeFacets);
+
+        return $availableFacets;
+    }
+
+    private function getCurrentConstrainedFacets(
+        ProductSearchContext $context,
+        ProductSearchQuery $query
+    ) {
+        $facets = $this->getCurrentFacets($context, $query);
+        $constrainedFacets = [];
+
+        foreach ($facets as $facet) {
+            foreach ($facet->getFilters() as $filter) {
+                if ($filter->isActive()) {
+                    $constrainedFacets[] = $facet;
+                    continue 2;
+                }
+            }
+        }
+
+        return $constrainedFacets;
+    }
+
     private function getConstrainedQueryBuilder(
         ProductSearchContext $context,
         ProductSearchQuery $query
     ) {
-        $facets = (new FacetsURLSerializer)->unserialize($query->getEncodedFacets());
+        $facets = $this->getCurrentConstrainedFacets($context, $query);
         return $this->getConstrainedQueryBuilderForFacets($context, $query, $facets);
     }
 
@@ -162,25 +210,7 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         ProductSearchContext $context,
         ProductSearchQuery $query
     ) {
-        $facetTypes = ['attribute', 'feature'];
-        $qb = $this->getBaseQueryBuilder($context, $query);
-        $availableFacets = [];
-
-        foreach ($facetTypes as $facetType) {
-            $facetDriver = $this->getFacetDriver(
-                $facetType,
-                $context
-            );
-
-            $availableFacets = array_merge(
-                $availableFacets,
-                $facetDriver->getAvailableFacets($qb)
-            );
-        }
-
-        $currentFacets = (new FacetsURLSerializer)->unserialize($query->getEncodedFacets());
-
-        $facets = (new FacetsMerger)->merge($availableFacets, $currentFacets);
+        $facets = $this->getCurrentFacets($context, $query);
 
         return $this->mapFacets($facets, function (
             Facet $facet,

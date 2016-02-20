@@ -38,9 +38,9 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
         return [
             [2, null, 7],
             [4, null, 2],
-            [2, 'attribute-Color-Blue', 2],
-            [2, 'attribute-Color-Blue-Green', 3],
-            [2, 'feature-Styles-Dressy', 1]
+            [2, 'Color-Blue', 2],
+            [2, 'Color-Blue-Green', 3],
+            [2, 'Styles-Dressy', 1]
         ];
     }
 
@@ -132,7 +132,7 @@ class ProductSearchProviderTest extends PHPUnit_Framework_TestCase
                 'Yellow' => 3,
                 'Pink'  => 1
             ]]],
-            [2, 'attribute-Color-Blue', [
+            [2, 'Color-Blue', [
                 'Styles' => [
                     'Casual' => 2
             ]], 'Size' => [

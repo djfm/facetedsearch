@@ -8,11 +8,6 @@ use PrestaShop\PrestaShop\Core\Product\Search\Filter;
 
 class FacetsURLSerializer
 {
-    private function decodeFacetType($type)
-    {
-        return $type;
-    }
-
     public function serialize(array $facets)
     {
         $urlFragmentSerializer = new URLFragmentSerializer;
@@ -34,17 +29,15 @@ class FacetsURLSerializer
         $facetsAsArray = $urlFragmentSerializer->unserialize($facetsAsString);
 
         $facets = [];
-        foreach ($facetsAsArray as $encodedType => $data) {
+        foreach ($facetsAsArray as $label => $filters) {
             $facet = new Facet;
-
             $facet
-                ->setType($this->decodeFacetType($encodedType))
-                ->setLabel(array_shift($data))
+                ->setLabel($label)
             ;
 
-            foreach ($data as $filterValue) {
+            foreach ($filters as $filterLabel) {
                 $filter = new Filter;
-                $filter->setValue($filterValue)->setActive(true);
+                $filter->setLabel($filterLabel)->setActive(true);
                 $facet->addFilter($filter);
             }
 
