@@ -1,6 +1,8 @@
 <?php
 
 use PrestaShop\FacetedSearch\FacetsURLSerializer;
+use PrestaShop\PrestaShop\Core\Product\Search\Facet;
+use PrestaShop\PrestaShop\Core\Product\Search\Filter;
 
 class FacetsURLSerializerTest extends PHPUnit_Framework_TestCase
 {
@@ -26,5 +28,33 @@ class FacetsURLSerializerTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf('PrestaShop\PrestaShop\Core\Product\Search\Filter', $filter);
         $this->assertEquals('Blue', $filter->getValue());
         $this->assertTrue($filter->isActive());
+    }
+
+    public function test_serialize_facet()
+    {
+        $facets = [
+            (new Facet)
+                ->setLabel("FacetA")
+                ->addFilter(
+                    (new Filter)->setLabel("filterAA")->setActive(true)
+                )
+                ->addFilter(
+                    (new Filter)->setLabel("filterAB")->setActive(true)
+                ),
+            (new Facet)
+                ->setLabel("FacetB")
+                ->addFilter(
+                    (new Filter)->setLabel("filterBA")->setActive(false)
+                )
+                ->addFilter(
+                    (new Filter)->setLabel("filterBB")->setActive(true)
+                )
+
+        ];
+
+        $this->assertEquals(
+            "FacetA-filterAA-filterAB/FacetB-filterBB",
+            $this->serializer->serialize($facets)
+        );
     }
 }

@@ -205,6 +205,14 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         });
     }
 
+    private function addNextEncodedFacetsToFilters(array $facets)
+    {
+        (new FiltersToggler)->forEachToggledFilter($facets, function (Filter $f, array $facets) {
+            $f->setNextEncodedFacets((new FacetsURLSerializer)->serialize($facets));
+        });
+        return $this;
+    }
+
     public function runQuery(
         ProductSearchContext $context,
         ProductSearchQuery $query
@@ -216,6 +224,7 @@ class ProductSearchProvider implements ProductSearchProviderInterface
         $result->setTotalProductsCount($count);
 
         $facets = $this->getUpdatedFacets($context, $query);
+        $this->addNextEncodedFacetsToFilters($facets);
         $result->setFacetCollection((new FacetCollection)->setFacets($facets));
 
         $sql = $this->generateSelectSQL($context, $query);

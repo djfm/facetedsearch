@@ -13,6 +13,20 @@ class FacetsURLSerializer
         return $type;
     }
 
+    public function serialize(array $facets)
+    {
+        $urlFragmentSerializer = new URLFragmentSerializer;
+        $labels = [];
+        foreach ($facets as $facet) {
+            foreach ($facet->getFilters() as $filter) {
+                if ($filter->isActive()) {
+                    $labels[$facet->getLabel()][] = $filter->getLabel();
+                }
+            }
+        }
+        return $urlFragmentSerializer->serialize($labels);
+    }
+
     public function unserialize($facetsAsString)
     {
         $urlFragmentSerializer = new URLFragmentSerializer;
